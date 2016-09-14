@@ -799,7 +799,7 @@ public class EntryEventImpl
       if (this.offHeapOk) {
         OffHeapHelper.releaseAndTrackOwner(this.newValue, this);
       }
-      if (StoredObject.hasReferenceCount(v)) {
+      if (StoredObject.isOffHeapReference(v)) {
         ReferenceCountHelper.setReferenceCountOwner(this);
         if (!((StoredObject) v).retain()) {
           ReferenceCountHelper.setReferenceCountOwner(null);
@@ -824,7 +824,7 @@ public class EntryEventImpl
   }
   
   private boolean isOffHeapReference(Object ref) {
-    return mayHaveOffHeapReferences() && StoredObject.hasReferenceCount(ref);
+    return mayHaveOffHeapReferences() && StoredObject.isOffHeapReference(ref);
   }
   
   private class OldValueOwner {
@@ -2828,7 +2828,7 @@ public class EntryEventImpl
     }
     synchronized (this.offHeapLock) {
       Object ov = basicGetOldValue();
-      if (StoredObject.hasReferenceCount(ov)) {
+      if (StoredObject.isOffHeapReference(ov)) {
         if (ReferenceCountHelper.trackReferenceCounts()) {
           ReferenceCountHelper.setReferenceCountOwner(new OldValueOwner());
           this.oldValue = OffHeapHelper.copyAndReleaseIfNeeded(ov);
@@ -2838,12 +2838,12 @@ public class EntryEventImpl
         }
       }
       Object nv = basicGetNewValue();
-      if (StoredObject.hasReferenceCount(nv)) {
+      if (StoredObject.isOffHeapReference(nv)) {
         ReferenceCountHelper.setReferenceCountOwner(this);
         this.newValue = OffHeapHelper.copyAndReleaseIfNeeded(nv);
         ReferenceCountHelper.setReferenceCountOwner(null);
       }
-      if (StoredObject.hasReferenceCount(this.newValue) || StoredObject.hasReferenceCount(this.oldValue)) {
+      if (StoredObject.isOffHeapReference(this.newValue) || StoredObject.isOffHeapReference(this.oldValue)) {
         throw new IllegalStateException("event's old/new value still off-heap after calling copyOffHeapToHeap");
       }
       this.offHeapOk = false;
